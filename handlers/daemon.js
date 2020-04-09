@@ -2,6 +2,7 @@ const {
     global: globalOpts,
     output: outputOpts,
     telegram: telegramOpts,
+    mirai: miraiOpts,
     extract: extractOpts,
     injectOptions
 } = require('./_options')
@@ -11,7 +12,7 @@ const setupSigterm = require('../lib/sigterm-handler')
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 module.exports = {
-    yargs: yargs => injectOptions(yargs, globalOpts, outputOpts, telegramOpts, extractOpts)
+    yargs: yargs => injectOptions(yargs, globalOpts, outputOpts, telegramOpts, extractOpts, miraiOpts)
         .usage('$0 daemon <room_id> [options]')
         .positional('room_id', {
             describe: 'room id or live url',

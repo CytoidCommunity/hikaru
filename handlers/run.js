@@ -12,6 +12,7 @@ const { unlink } = require('fs')
 const dateformat = require('dateformat')
 const { resolve: resolveUrl } = require('url')
 const { sendMessage, editMessageText } = require('../lib/telegram-api')
+const { sendMMessages } = require('../lib/mirai-api')
 const { parseArgsStringToArgv } = require('string-argv')
 const { PassThrough } = require('stream')
 const { resolve: pathResolve } = require('path')
@@ -97,6 +98,33 @@ async function sendNotification(tgOpts, messageArgs) {
         return {
             editMessageText: args => Promise.resolve(null)
         }
+    }
+}
+
+async function sendMNotification(miraiOpts, msg) {
+    const {
+        miraiHttpApi,
+        mirai: groups
+    } = miraiOpts || {}
+
+    const {
+        qq,
+        authkey,
+        host,
+        port
+    } = miraiHttpApi || {}
+
+    if (qq && authkey && host && port) {
+        try {
+            const messageId = await sendMMessages({ qq, authkey, host, port, groups }, msg)
+            console.error(`✉️  Mirai 消息已投递`)
+            return messageId
+        } catch(error) {
+            console.error(`✉️  Mirai 消息投递失败：${error.message}`)
+            return undefined
+        }
+    } else {
+        return undefined
     }
 }
 
@@ -276,6 +304,8 @@ module.exports = {
             telegramEndpoint,
             telegram = null,
             silent = false,
+            miraiHttpApi,
+            mirai = [],
             noCapture = false,
             format = 'flv',
             extract = false,
@@ -284,6 +314,7 @@ module.exports = {
         } = argv
 
         const telegramOpts = { telegramEndpoint, telegram, silent }
+        const miraiOpts = { miraiHttpApi, mirai }
 
         if (extract && (output === '-' || output === '')) {
             console.error(`--extract can not work with stdout output`)
@@ -315,6 +346,10 @@ module.exports = {
                 parse_mode: 'HTML',
                 text: `🌟hikaru: <a href="https://live.bilibili.com/${canonicalRoomId}">${name} (${canonicalRoomId})</a> 开始直播「${title}」啦，快去让 TA 发光吧！`,
             })
+            const mnotificationPromise = sendMNotification(miraiOpts, [{
+                type: "Plain",
+                text: `🌟hikaru: ${name} (${canonicalRoomId}) 开始直播「${title}」啦，快去让 TA 发光吧！直播间地址: https://live.bilibili.com/${canonicalRoomId}`
+            }])
 
             // keep going until liveStatus changes to NOT_LIVE (1)
             // this is to deal with minor streaming disruptions (i.e. CDN network congestion)

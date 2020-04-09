@@ -56,6 +56,15 @@ hikaru daemon <room_id>   # 房间号（短号、长号均可）
 3. 用 [@userinfobot](https://telegram.me/userinfobot) 获取自己的 `telegram_id`，用来创建和 Bot 的私人聊天
 4. 用 `-t` 选项和上面记下的信息开启通知: `hikaru daemon <room_id> -t <token>:<telegram_id>`
 
+### QQ 开播通知
+
+*用 Mirai 以及 Mirai HTTP API 插件作为 QQ 机器人后端。*
+
+开播时向 QQ 群内投递消息。向 daemon 指令后追加以下两个参数：
+```shell
+-M <qq>:<authkey>@<host>:<port> # 机器人的QQ号、Mirai-HTTP-API认证秘钥、后端地址和端口
+-m [groups]       # 要投递的群，可以填多个，请用空格隔开
+```
 
 ## 弹幕监听 / 超级弹幕姬 - dmk
 ```shell

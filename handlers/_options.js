@@ -1,6 +1,7 @@
 // global options parser
 const { hasPosenetSupport } = require('../modular-support')
 const parseTelegram = require('../lib/telegram-parser')
+const parseMirai = require('../lib/mirai-parser')
 const { defaultMongodbConnection } = require('../lib/_mongo')
 const { ANALYSIS_BACKENDS } = require('./extract')
 
@@ -78,6 +79,21 @@ module.exports = {
             describe: 'deliver notification silently',
             type: 'boolean',
             default: false
+        })
+    ,
+    mirai: yargs => yargs
+        .option('M', {
+            alias: 'mirai-http-api',
+            describe: 'Mirai HTTP API: <qq>:<authkey>@<host>:<port>',
+            type: 'string',
+            coerce: parseMirai,
+            default: ''
+        })
+        .option('m', {
+            alias: 'mirai',
+            describe: 'mirai notification groups',
+            type: 'array',
+            default: []
         })
     ,
     database: yargs => yargs

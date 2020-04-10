@@ -100,7 +100,6 @@ module.exports = {
         .option('U', {
             alias: 'uplink-endpoint',
             describe: 'a minio-compatible server endpoint',
-            required: true,
             type: 'string'
         })
     ,

@@ -395,7 +395,7 @@ module.exports = {
                     title: postCaptureTitle,
                 } = await getRoomInfo(inputRoomId)
 
-                if (postCaptureLiveStatus !== 1 || Date.now() - captureStartsAt > 2000) {
+                if (postCaptureLiveStatus !== 1) {
                     console.error(`⭐️  ${name} 直播结束 ${liveStatus}`)
 
                     // compute statistics

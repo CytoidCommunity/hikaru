@@ -90,10 +90,18 @@ module.exports = {
             default: ''
         })
         .option('m', {
-            alias: 'mirai',
+            alias: 'mirai-groups',
             describe: 'mirai notification groups',
             type: 'array',
             default: []
+        })
+    ,
+    uplink: yargs => yargs
+        .option('U', {
+            alias: 'uplink-endpoint',
+            describe: 'a minio-compatible server endpoint',
+            required: true,
+            type: 'string'
         })
     ,
     database: yargs => yargs

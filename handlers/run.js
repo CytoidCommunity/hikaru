@@ -104,7 +104,7 @@ async function sendNotification(tgOpts, messageArgs) {
 async function sendMNotification(miraiOpts, msg) {
     const {
         miraiHttpApi,
-        mirai: groups
+        group
     } = miraiOpts || {}
 
     const {
@@ -116,9 +116,11 @@ async function sendMNotification(miraiOpts, msg) {
 
     if (qq && authkey && host && port) {
         try {
-            const messageId = await sendMMessages({ qq, authkey, host, port, groups }, msg)
+            const messageId = await sendMMessages({ qq, authkey, host, port, group }, msg)
             console.error(`✉️  Mirai 消息已投递`)
-            return messageId
+            return {
+                reply: msg => sendMNotification(miraiOpts, msg)
+            }
         } catch(error) {
             console.error(`✉️  Mirai 消息投递失败：${error.message}`)
             return undefined
@@ -305,7 +307,8 @@ module.exports = {
             telegram = null,
             silent = false,
             miraiHttpApi,
-            mirai = [],
+            miraiGroups = [],
+            uplinkEndpoint = null,
             noCapture = false,
             format = 'flv',
             extract = false,
@@ -314,7 +317,6 @@ module.exports = {
         } = argv
 
         const telegramOpts = { telegramEndpoint, telegram, silent }
-        const miraiOpts = { miraiHttpApi, mirai }
 
         if (extract && (output === '-' || output === '')) {
             console.error(`--extract can not work with stdout output`)
@@ -346,10 +348,10 @@ module.exports = {
                 parse_mode: 'HTML',
                 text: `🌟hikaru: <a href="https://live.bilibili.com/${canonicalRoomId}">${name} (${canonicalRoomId})</a> 开始直播「${title}」啦，快去让 TA 发光吧！`,
             })
-            const mnotificationPromise = sendMNotification(miraiOpts, [{
+            const mnotificationPromise = miraiGroups.map(group => sendMNotification({ miraiHttpApi, group }, [{
                 type: "Plain",
                 text: `🌟hikaru: ${name} (${canonicalRoomId}) 开始直播「${title}」啦，快去让 TA 发光吧！直播间地址: https://live.bilibili.com/${canonicalRoomId}`
-            }])
+            }]))
 
             // keep going until liveStatus changes to NOT_LIVE (1)
             // this is to deal with minor streaming disruptions (i.e. CDN network congestion)
@@ -357,6 +359,7 @@ module.exports = {
             const captureStartsAt = Date.now()
 
             while (true) {
+                var outputPath = undefined
                 if (noCapture) {
                     // sleep until live state changes
                     await sleep(LIVE_STATUS_CHECK_INTERVAL)
@@ -374,7 +377,7 @@ module.exports = {
                         promiseExtractionFinish
                     } = await captureStream(flvPath, canonicalRoomId, extractOpts)
 
-                    const outputPath = getOutputPath(output, outputDir, { idol: name, ext: format, time: flvTime })
+                    outputPath = getOutputPath(output, outputDir, { idol: name, ext: format, time: flvTime })
 
                     // asynchronously convert container format
                     promiseExtractionFinish.then(success => {
@@ -392,7 +395,7 @@ module.exports = {
                     title: postCaptureTitle,
                 } = await getRoomInfo(inputRoomId)
 
-                if (postCaptureLiveStatus !== 1) {
+                if (postCaptureLiveStatus !== 1 || Date.now() - captureStartsAt > 2000) {
                     console.error(`⭐️  ${name} 直播结束 ${liveStatus}`)
 
                     // compute statistics
@@ -409,6 +412,30 @@ module.exports = {
                             disable_web_page_preview: true,
                         })
                     })
+                    mnotificationPromise.forEach(e => e
+                        .then(notification => {
+                            notification.reply([{
+                                type: "Plain",
+                                text: `🌟hikaru: ${name} (${canonicalRoomId}) 直播「${postCaptureTitle}」结束，${outcomeStr} ${formatTimeDuration(capturedDuration)}。`
+                            }])
+                        })
+                    )
+
+                    if (uplinkEndpoint) {
+                        const child = spawn(
+                            `hikaru`,
+                            [
+                                'uplink',
+                                `${uplinkEndpoint}`,
+                                '-o',
+                                `${outputPath}`
+                            ],
+                            {
+                                stdio: ['ignore', 'pipe', 'pipe']
+                            }
+                        )
+                        child.stderr.pipe(process.stderr)
+                    }
                     return 0
                 }
             }

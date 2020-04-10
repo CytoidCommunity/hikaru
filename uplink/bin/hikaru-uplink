@@ -8,13 +8,14 @@ const { resolve, extname, basename } = require('path')
 
 const parseDuration = require('parse-duration')
 const Minio = require('minio')
+const AliOSS = require('ali-oss')
 const asyncPool = require('tiny-async-pool')
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function checkFile(output) {
     if (await stat(output).then(stats => stats.isFile()))
-        return [resolve(process.cwd, output)]
+        return [resolve(process.cwd(), output)]
     else
         return []
 }
@@ -71,6 +72,34 @@ async function uploadFile(minioClient, bucket, canonicalPath, retries = 0) {
         console.error(`⚠️  Errored:   ${fileName}, code = ${result.error.code}`)
         await sleep(RETRY_DELAY)
         return await uploadFile(minioClient, bucket, canonicalPath, retries + 1)
+    }
+
+    console.error(`☑️  Uploaded:  ${fileName}, etag = ${result.etag}`)
+    return true
+}
+async function uploadFileA(aliClient, canonicalPath, retries = 0) {
+    const fileName = basename(canonicalPath)
+
+    if (retries > MAX_RETRIES) {
+        console.error(`❌ Failed:    ${fileName}, max retry count reached.`)
+        return false
+    }
+
+    const retry_indicatior = RETRY_COUNT_TO_INDICATOR[retries] || DEFAULT_INDICATOR
+    if (retries)
+        console.error(`${retry_indicatior} Retrying:  ${fileName}, attempts = ${retries}/${MAX_RETRIES}`)
+    else
+        console.error(`${retry_indicatior} Uploading: ${fileName}`)
+
+    const result = await aliClient.put(fileName, canonicalPath)
+        .then(
+            res => ({ code: res.res.status, etag: res.res.headers.etag, res: res })
+        )
+    
+    if (result.code != 200) {
+        console.error(`⚠️  Errored:   ${fileName}, code = ${result.code}`)
+        await sleep(RETRY_DELAY)
+        return await uploadFileA(aliClient, canonicalPath, retries + 1)
     }
 
     console.error(`☑️  Uploaded:  ${fileName}, etag = ${result.etag}`)
@@ -227,38 +256,58 @@ module.exports = {
         if (!isHttps)
             console.log(`⚠️  Inseucre connection used: ${endpoint}`)
 
-        const minioClient = new Minio.Client({
-            endPoint: serverHost,
-            port: serverPort,
-            useSSL: isHttps,
-            accessKey,
-            secretKey: accessSecret
-        })
+        if (serverHost.search('aliyun') != -1) {
+            const aliClient = new AliOSS({
+                bucket: bucket,
+                endpoint: serverHost,
+                accessKeyId: accessKey,
+                accessKeySecret: accessSecret
+            })
 
-        // Check bucket exists.
-        const bucketExists = await minioClient.bucketExists(bucket)
-            .then(
-                exists => exists,
-                error => {
-                    console.error(`❌ Minio Error: ${error.code}`)
-                    return false
-                }
-            )
+            const results = await asyncPool(concurrentUploads, filesToUpload, (canonicalPath) => uploadFileA(aliClient, canonicalPath))
+            const nSuccess = results.filter(result => result).length
+            console.error('✅ All done.')
+            if (nSuccess == results.length)
+                console.error(`🎉 Success = ${nSuccess} / Total = ${results.length}.`)
+            else
+                console.error(`🤨 Success = ${nSuccess} / Total = ${results.length}.`)
 
-        if (!bucketExists) {
-            console.error('❌ Minio bucket not found.')
-            process.exit(5)
+            process.exit(0)
         }
+        else {
+            const minioClient = new Minio.Client({
+                endPoint: serverHost,
+                port: serverPort,
+                useSSL: isHttps,
+                accessKey,
+                secretKey: accessSecret
+            })
 
-        const results = await asyncPool(concurrentUploads, filesToUpload, (canonicalPath) => uploadFile(minioClient, bucket, canonicalPath))
-        const nSuccess = results.filter(result => result).length
-        console.error('✅ All done.')
-        if (nSuccess == results.length)
-            console.error(`🎉 Success = ${nSuccess} / Total = ${results.length}.`)
-        else
-            console.error(`🤨 Success = ${nSuccess} / Total = ${results.length}.`)
+            // Check bucket exists.
+            const bucketExists = await minioClient.bucketExists(bucket)
+                .then(
+                    exists => exists,
+                    error => {
+                        console.error(`❌ Minio Error: ${error.code}`)
+                        return false
+                    }
+                )
 
-        process.exit(0)
+            if (!bucketExists) {
+                console.error('❌ Minio bucket not found.')
+                process.exit(5)
+            }
+
+            const results = await asyncPool(concurrentUploads, filesToUpload, (canonicalPath) => uploadFile(minioClient, bucket, canonicalPath))
+            const nSuccess = results.filter(result => result).length
+            console.error('✅ All done.')
+            if (nSuccess == results.length)
+                console.error(`🎉 Success = ${nSuccess} / Total = ${results.length}.`)
+            else
+                console.error(`🤨 Success = ${nSuccess} / Total = ${results.length}.`)
+
+            process.exit(0)
+        }
     },
 }
 

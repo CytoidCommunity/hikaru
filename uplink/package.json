@@ -9,6 +9,7 @@
   "author": "Jiewei Qian <qjw@wacky.one>",
   "license": "GPL-3.0",
   "dependencies": {
+    "ali-oss": "^6.6.0",
     "minio": "^7.0.14",
     "parse-duration": "^0.1.2",
     "tiny-async-pool": "^1.1.0",

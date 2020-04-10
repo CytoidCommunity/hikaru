@@ -21,7 +21,7 @@
 `wacky6/hikaru:lite` 仅提供**基础录屏**功能（仅daemon和dmk），镜像大小 ~120MB \
 `wacky6/hikaru:full` 提供完整功能（包括自动提取），镜像大小 ~400MB
 
-```shell
+```bash
 docker pull wacky6/hikaru:<tag>
 docker run -v <local_dir>:/root/hikaru/ wacky6/hikaru <command> [args...]
 ```
@@ -29,7 +29,7 @@ docker run -v <local_dir>:/root/hikaru/ wacky6/hikaru <command> [args...]
 在指令后追加 `--help` 选项查看帮助，参见[Docker示例](#示例-docker环境)
 
 ## 直播监听 - daemon
-```shell
+```bash
 hikaru daemon <room_id>   # 房间号（短号、长号均可）
 ```
 
@@ -40,12 +40,21 @@ hikaru daemon <room_id>   # 房间号（短号、长号均可）
 * `-f` / `--format`：指定录播文件格式，支持： `mp4` / `mkv`。
 * `-i` / `--interval`：开播状态查询间隔，单位为秒。默认`60s`。过快可能导致被封禁
 
+### 直播结束后自动上传录像
+
+实现原理：直播结束后自动调用 uplink 指令将录播文件上传
+
+向 daemon 指令后追加参数：
+```bash
+-U <minio_endpoint>   # minio_endpoint 与 uplink 指令下同名参数相同，将会被直接传递过去
+```
+
 ### Telegram 开播通知
 
 ![Notification Screenshot](./notification.png)
 
 开播时投递 Telegram 消息。向 daemon 指令后追加以下两个参数：
-```shell
+```bash
 -T https://api.telegram.org/    # 可选，Telegram API地址，绕墙
 -t <tg_token>:<chat_id>    # Telegram Bot Token 和 聊天 ID，消息投送到目标聊天
 ```
@@ -61,13 +70,13 @@ hikaru daemon <room_id>   # 房间号（短号、长号均可）
 *用 Mirai 以及 Mirai HTTP API 插件作为 QQ 机器人后端。*
 
 开播时向 QQ 群内投递消息。向 daemon 指令后追加以下两个参数：
-```shell
+```bash
 -M <qq>:<authkey>@<host>:<port> # 机器人的QQ号、Mirai-HTTP-API认证秘钥、后端地址和端口
 -m [groups]       # 要投递的群，可以填多个，请用空格隔开
 ```
 
 ## 弹幕监听 / 超级弹幕姬 - dmk
-```shell
+```bash
 hikaru dmk [-R] <room_id...>   # 房间号（短号、长号均可）
 ```
 
@@ -85,7 +94,7 @@ hikaru dmk [-R] <room_id...>   # 房间号（短号、长号均可）
   例如： `--log-path /root/hikaru/dmk-@roomid.log`
 
 ## 身体姿势分析 - pose
-```shell
+```bash
 hikaru pose <input>
 ```
 
@@ -105,7 +114,7 @@ hikaru pose <input>
 
 
 ## 热点片段截取 - extract
-```shell
+```bash
 hikaru extract <media> -t <type>
 ```
 
@@ -121,15 +130,17 @@ hikaru extract <media> -t <type>
 
 
 ## 自动上传 Minio - uplink
-```shell
+```bash
 hikaru uplink -f [mtime_within] -e [extensions] -O <outdir> <minio_endpoint>
 ```
 
 实现自动上传/自助获取录播，详见 [uplink/README.md](uplink/README.md)。
 
+**现已支持阿里云OSS，对应`<minio_endpoint>`格式为：https://endpoint/bucket 示例：https://oss-cn-hangzhou.aliyuncs.com/hikaru**
+
 
 ## 示例 （Docker环境）
-```shell
+```bash
 ### 基础录屏
 # 录制 922045 房间
 # 保存录像到 `/storage/hikaru/焦小玲珑`
@@ -143,7 +154,7 @@ docker run \
   -T https://tg-api.example.com/
 ```
 
-```shell
+```bash
 ### 基础弹幕捕获
 # 监听 922045、697773 房间的弹幕
 # 每房间一个冗余的弹幕姬
@@ -160,7 +171,7 @@ docker run \
   922045 697773
 ```
 
-```shell
+```bash
 ### 录屏并自动提取
 # 录制并自动提取 424902 房间的跳舞片段
 # 保存录像到 `/storage/hikaru/424902`
@@ -176,7 +187,7 @@ docker run \
   -x dance -X '-p -d -f mp4'
 ```
 
-```shell
+```bash
 ### 从已有录屏提取
 # 提取 /storage/焦小玲珑/2018-09-04_180519.flv 录屏
 # 提取跳舞片段为 mp4 到 /cache/extracted-922045

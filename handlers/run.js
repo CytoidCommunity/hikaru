@@ -383,7 +383,24 @@ module.exports = {
                     promiseExtractionFinish.then(success => {
                         if (success) {
                             console.error(`run: extraction success.`)
-                            return convertContainerFormat(flvPath, outputPath, format)
+                            return convertContainerFormat(flvPath, outputPath, format).then(success => {
+                                if (uplinkEndpoint) {
+                                    const child = spawn(
+                                        `hikaru`,
+                                        [
+                                            'uplink',
+                                            `${uplinkEndpoint}`,
+                                            '-o',
+                                            `${outputPath}`
+                                        ],
+                                        {
+                                            stdio: ['ignore', 'pipe', 'pipe']
+                                        }
+                                    )
+                                    child.stderr.pipe(process.stderr)
+                                }
+                                return success
+                            })
                         } else {
                             console.error(`run: extraction fails, will not convert container format`)
                         }
@@ -421,21 +438,6 @@ module.exports = {
                         })
                     )
 
-                    if (uplinkEndpoint) {
-                        const child = spawn(
-                            `hikaru`,
-                            [
-                                'uplink',
-                                `${uplinkEndpoint}`,
-                                '-o',
-                                `${outputPath}`
-                            ],
-                            {
-                                stdio: ['ignore', 'pipe', 'pipe']
-                            }
-                        )
-                        child.stderr.pipe(process.stderr)
-                    }
                     return 0
                 }
             }

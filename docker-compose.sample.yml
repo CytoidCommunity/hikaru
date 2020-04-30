@@ -1,0 +1,14 @@
+version: "3"
+services:
+  placeholder:
+    build:
+      context: .
+      dockerfile: Dockerfile.cytolive
+    volumes:
+      - ./data:/root/hikaru
+    env_file: .env
+    environment:
+      HTTP_PROXY: "${HTTP_PROXY}"
+      MIRAI_GROUPS: 123456
+      ROOM_ID: 123456
+    network_mode: host

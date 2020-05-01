@@ -5,3 +5,5 @@ node_modules
 posenet/mobilenet*
 posenet/libtensorflow.*
 .vscode
+docker-compose.yml
+.env

@@ -7,3 +7,4 @@ posenet/libtensorflow.*
 .vscode
 docker-compose.yml
 .env
+data

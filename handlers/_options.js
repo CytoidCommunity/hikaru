@@ -2,6 +2,7 @@
 const { hasPosenetSupport } = require('../modular-support')
 const parseTelegram = require('../lib/telegram-parser')
 const parseMirai = require('../lib/mirai-parser')
+const parseProxy = require('../lib/proxy-parser')
 const { defaultMongodbConnection } = require('../lib/_mongo')
 const { ANALYSIS_BACKENDS } = require('./extract')
 
@@ -100,7 +101,8 @@ module.exports = {
         .option('P', {
             alias: 'proxy',
             describe: 'Proxy to use (bilibili live `playUrl` api only)',
-            type: 'string'
+            type: 'string',
+            coerce: parseProxy
         })
     ,
     uplink: yargs => yargs

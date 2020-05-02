@@ -308,7 +308,7 @@ module.exports = {
             silent = false,
             miraiHttpApi,
             miraiGroups = [],
-            proxyOpts = null,
+            proxy = null,
             uplinkEndpoint = null,
             noCapture = false,
             format = 'flv',
@@ -376,7 +376,7 @@ module.exports = {
 
                     const {
                         promiseExtractionFinish
-                    } = await captureStream(flvPath, canonicalRoomId, extractOpts, proxyOpts)
+                    } = await captureStream(flvPath, canonicalRoomId, extractOpts, proxy)
 
                     outputPath = getOutputPath(output, outputDir, { idol: name, ext: format, time: flvTime })
 

@@ -5,7 +5,7 @@ const {
     extract: extractOpts
 } = require('./_options')
 const { parseRoom } = require('../lib/parser')
-const { getRoomInfo, getRoomUser, getPlayUrls } = require('../lib/bili-api')
+const { autoRetry, getRoomInfo, getRoomUser, getPlayUrls } = require('../lib/bili-api')
 const { spawn } = require('child_process')
 const { createWriteStream, getFileSize, getOutputPath } = require('../lib/fs')
 const { unlink } = require('fs')
@@ -166,7 +166,7 @@ async function captureStream(outputPath, canonicalRoomId, extractOpts = false, p
     const {
         quality,
         urls,
-    } = await getPlayUrls(canonicalRoomId, proxyOpts)
+    } = await autoRetry(getPlayUrls, canonicalRoomId, proxyOpts)
 
     if (urls.length === 0) {
         throw new Error('Stream list is empty')
@@ -332,10 +332,10 @@ module.exports = {
                 liveStatus,
                 liveStartsAt,
                 title,
-            } = await getRoomInfo(inputRoomId)
+            } = await autoRetry(getRoomInfo, inputRoomId)
             const {
                 name
-            } = await getRoomUser(canonicalRoomId)
+            } = await autoRetry(getRoomUser, canonicalRoomId)
 
             if (liveStatus !== 1) {
                 console.error(`⭐️  ${name} 不在直播 ${liveStatus}`)
@@ -411,7 +411,7 @@ module.exports = {
                 const {
                     liveStatus: postCaptureLiveStatus,
                     title: postCaptureTitle,
-                } = await getRoomInfo(inputRoomId)
+                } = await autoRetry(getRoomInfo, inputRoomId)
 
                 if (postCaptureLiveStatus !== 1) {
                     console.error(`⭐️  ${name} 直播结束 ${liveStatus}`)

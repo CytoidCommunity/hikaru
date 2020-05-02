@@ -16,7 +16,6 @@
   "dependencies": {
     "amqplib": "^0.5.3",
     "axios": "^0.19.2",
-    "axios-retry": "^3.1.8",
     "dateformat": "^3.0.3",
     "mkdirp": "^0.5.1",
     "mktemp": "^1.0.0",

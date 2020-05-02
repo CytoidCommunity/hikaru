@@ -29,4 +29,4 @@ COPY lib /hikaru/lib
 COPY uplink /hikaru/uplink
 COPY modular-support.js LICENSE README.md /hikaru/
 
-CMD /hikaru/bin/hikaru daemon $ROOM_ID -M $MIRAI_API -m $MIRAI_GROUPS $EXTRA
+CMD /hikaru/bin/hikaru daemon $ROOM_ID -f mp4 -P 127.0.0.1:1080 -M $MIRAI_API -m $MIRAI_GROUPS $EXTRA

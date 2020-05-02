@@ -96,6 +96,13 @@ module.exports = {
             default: []
         })
     ,
+    proxy: yargs => yargs
+        .option('P', {
+            alias: 'proxy',
+            describe: 'Proxy to use (bilibili live `playUrl` api only)',
+            type: 'string'
+        })
+    ,
     uplink: yargs => yargs
         .option('U', {
             alias: 'uplink-endpoint',

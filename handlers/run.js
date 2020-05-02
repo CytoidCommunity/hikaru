@@ -162,11 +162,11 @@ function formatTimeDuration(secs) {
  *                                 (caller should preserve original stream in this case)
  *   }
  */
-async function captureStream(outputPath, canonicalRoomId, extractOpts = false) {
+async function captureStream(outputPath, canonicalRoomId, extractOpts = false, proxyOpts = null) {
     const {
         quality,
         urls,
-    } = await getPlayUrls(canonicalRoomId)
+    } = await getPlayUrls(canonicalRoomId, proxyOpts)
 
     if (urls.length === 0) {
         throw new Error('Stream list is empty')
@@ -308,6 +308,7 @@ module.exports = {
             silent = false,
             miraiHttpApi,
             miraiGroups = [],
+            proxyOpts = null,
             uplinkEndpoint = null,
             noCapture = false,
             format = 'flv',
@@ -375,7 +376,7 @@ module.exports = {
 
                     const {
                         promiseExtractionFinish
-                    } = await captureStream(flvPath, canonicalRoomId, extractOpts)
+                    } = await captureStream(flvPath, canonicalRoomId, extractOpts, proxyOpts)
 
                     outputPath = getOutputPath(output, outputDir, { idol: name, ext: format, time: flvTime })
 

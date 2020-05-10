@@ -376,7 +376,7 @@ module.exports = {
 
                     const {
                         promiseExtractionFinish
-                    } = await captureStream(flvPath, canonicalRoomId, extractOpts, proxy)
+                    } = await autoRetry(captureStream, flvPath, canonicalRoomId, extractOpts, proxy)
 
                     outputPath = getOutputPath(output, outputDir, { idol: name, ext: format, time: flvTime })
 

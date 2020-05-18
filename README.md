@@ -1,3 +1,5 @@
+# 本项目不再维护。请使用 [CytoidCommunity/conflict](https://github.com/CytoidCommunity/conflict) 以获得更好的使用体验。
+
 <p align="center">
     <img width="360" height="350" src="https://raw.githubusercontent.com/wacky6/hikaru/master/icon.png"></img>
     <h1 align="center">hikaru</h1>
